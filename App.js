@@ -4,7 +4,7 @@ import { StyleSheet, Dimensions, View } from "react-native";
 import MapView, { PROVIDER_GOOGLE } from 'react-native-maps'; // remove PROVIDER_GOOGLE import if not using Google Maps
 import Polyline from '@mapbox/polyline';
 
-const GOOGLE_API_KEY = 'AIzaSyCV5NrqBsUL9MRBoFKLwiTI7IOVJJMwt6A'
+import GOOGLE_API_KEY from './tokenGoogle'
 
 class App extends Component {
   constructor(props) {
