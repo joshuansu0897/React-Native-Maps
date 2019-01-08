@@ -17,12 +17,12 @@ class App extends Component {
       concat: null,
       coords: [],
       x: 'false',
+      // Destination
       cordLatitude: 29.091201,
       cordLongitude: -110.968367,
     };
 
     this.mergeLot = this.mergeLot.bind(this);
-
   }
 
   componentDidMount() {
@@ -40,7 +40,6 @@ class App extends Component {
       (error) => this.setState({ error: error.message }),
       { enableHighAccuracy: false, timeout: 2000, maximumAge: 1000 },
     );
-
   }
 
   mergeLot() {
@@ -49,11 +48,11 @@ class App extends Component {
       this.setState({
         concat: concatLot
       }, () => {
-        this.getDirections(concatLot, "29.091201,-110.968367");
+        this.getDirections(concatLot, this.state.cordLatitude + "," + this.state.cordLongitude);
       });
     }
-
   }
+
   async getDirections(startLoc, destinationLoc) {
 
     try {
