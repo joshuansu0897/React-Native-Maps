@@ -38,7 +38,7 @@ class App extends Component {
         this.mergeLot();
       },
       (error) => this.setState({ error: error.message }),
-      { enableHighAccuracy: false, timeout: 2000, maximumAge: 1000 },
+      { enableHighAccuracy: true, timeout: 2000, maximumAge: 1000 },
     );
   }
 
