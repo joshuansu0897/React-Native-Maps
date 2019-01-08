@@ -83,8 +83,8 @@ class App extends Component {
     return (
       <View>
         <MapView style={styles.map} provider={PROVIDER_GOOGLE} initialRegion={{
-          latitude: 29.105995525605977,
-          longitude: -110.95119637437166,
+          latitude: this.state.cordLatitude,
+          longitude: this.state.cordLongitude,
           latitudeDelta: 0.10,
           longitudeDelta: 0.10
         }}>
