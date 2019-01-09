@@ -26,7 +26,6 @@ class App extends Component {
         latitudeDelta: LATITUDE_DELTA,
         longitudeDelta: LONGITUDE_DELTA,
       },
-      // Destination
       cordLatitude: null,
       cordLongitude: null,
       coords: null,
@@ -48,12 +47,12 @@ class App extends Component {
             longitudeDelta: LONGITUDE_DELTA,
           }
         })
-        this.mergeLot()
       },
       (error) => console.log(error.message),
       { enableHighAccuracy: true, timeout: 20000, maximumAge: 1000 },
     )
   }
+
   componentDidMount() {
     this.watchID = navigator.geolocation.watchPosition(
       position => {
@@ -71,6 +70,7 @@ class App extends Component {
       { enableHighAccuracy: true, timeout: 20000, maximumAge: 1000, useSignificantChanges: false, distanceFilter: 8 },
     )
   }
+
   componentWillUnmount() {
     navigator.geolocation.clearWatch(this.watchID)
   }
@@ -185,6 +185,7 @@ class App extends Component {
     )
   }
 }
+
 const styles = StyleSheet.create({
   map: {
     width,
