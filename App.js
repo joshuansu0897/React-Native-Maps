@@ -1,68 +1,92 @@
-import React, { Component } from "react";
-import { StyleSheet, Dimensions, View } from "react-native";
+import React, { Component } from "react"
+import { StyleSheet, Dimensions } from 'react-native'
 
-import MapView, { PROVIDER_GOOGLE } from 'react-native-maps'; // remove PROVIDER_GOOGLE import if not using Google Maps
-import Polyline from '@mapbox/polyline';
+import MapView, { PROVIDER_GOOGLE } from 'react-native-maps'
+import Polyline from '@mapbox/polyline'
+import { Container, Header, Item, Input, Icon, Button, Text } from 'native-base';
 
 import GOOGLE_API_KEY from './tokenGoogle'
 
-class App extends Component {
-  constructor(props) {
-    super(props);
+let { width, height } = Dimensions.get('window')
+const ASPECT_RATIO = width / height
+const LATITUDE = 0
+const LONGITUDE = 0
+const LATITUDE_DELTA = 0.0922
+const LONGITUDE_DELTA = LATITUDE_DELTA * ASPECT_RATIO
 
+class App extends Component {
+  constructor() {
+    super()
     this.state = {
-      latitude: null,
-      longitude: null,
-      error: null,
-      concat: null,
-      coords: [],
-      x: 'false',
+      region: {
+        latitude: LATITUDE,
+        longitude: LONGITUDE,
+        latitudeDelta: LATITUDE_DELTA,
+        longitudeDelta: LONGITUDE_DELTA,
+      },
       // Destination
       cordLatitude: 29.091201,
       cordLongitude: -110.968367,
-    };
+      coords: null,
+    }
 
-    this.mergeLot = this.mergeLot.bind(this);
+    this.mergeLot = this.mergeLot.bind(this)
   }
 
-  componentDidMount() {
-    navigator.geolocation.watchPosition(
-      (position) => {
-        console.log('---position---')
-        console.log(position.coords)
+  componentWillMount() {
+    navigator.geolocation.getCurrentPosition(
+      position => {
         this.setState({
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-          error: null,
-        });
-        this.mergeLot();
+          region: {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            latitudeDelta: LATITUDE_DELTA,
+            longitudeDelta: LONGITUDE_DELTA,
+          }
+        })
+        this.mergeLot()
       },
-      (error) => this.setState({ error: error.message }),
-      { enableHighAccuracy: true, timeout: 2000, maximumAge: 1000 },
-    );
+      (error) => console.log(error.message),
+      { enableHighAccuracy: true, timeout: 20000, maximumAge: 1000 },
+    )
+  }
+  componentDidMount() {
+    this.watchID = navigator.geolocation.watchPosition(
+      position => {
+        this.setState({
+          region: {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            latitudeDelta: LATITUDE_DELTA,
+            longitudeDelta: LONGITUDE_DELTA,
+          }
+        })
+        this.mergeLot()
+      },
+      (error) => console.log(error.message),
+      { enableHighAccuracy: true, timeout: 20000, maximumAge: 1000, useSignificantChanges: false, distanceFilter: 8 },
+    )
+  }
+  componentWillUnmount() {
+    navigator.geolocation.clearWatch(this.watchID)
   }
 
   mergeLot() {
-    if (this.state.latitude != null && this.state.longitude != null) {
-      let concatLot = this.state.latitude + "," + this.state.longitude
-      this.setState({
-        concat: concatLot
-      }, () => {
-        this.getDirections(concatLot, this.state.cordLatitude + "," + this.state.cordLongitude);
-      });
+    if (this.state.region != null) {
+      let concatLot = this.state.region.latitude + "," + this.state.region.longitude
+      this.getDirections(concatLot, this.state.cordLatitude + "," + this.state.cordLongitude)
     }
   }
 
   async getDirections(startLoc, destinationLoc) {
-
     try {
       let resp = await fetch(`https://maps.googleapis.com/maps/api/directions/json?origin=${startLoc}&destination=${destinationLoc}&key=${GOOGLE_API_KEY}`)
 
-      let respJson = await resp.json();
+      let respJson = await resp.json()
       console.log(respJson)
       console.log(`https://maps.googleapis.com/maps/api/directions/json?origin=${startLoc}&destination=${destinationLoc}&key=${GOOGLE_API_KEY}`)
 
-      let points = Polyline.decode(respJson.routes[0].overview_polyline.points);
+      let points = Polyline.decode(respJson.routes[0].overview_polyline.points)
       let coords = points.map((point, index) => {
         return {
           latitude: point[0],
@@ -70,65 +94,53 @@ class App extends Component {
         }
       })
       this.setState({ coords: coords })
-      this.setState({ x: "true" })
       return coords
     } catch (error) {
       console.log(error)
-      this.setState({ x: "error" })
       return error
     }
   }
-
   render() {
     return (
-      <View>
-        <MapView style={styles.map} provider={PROVIDER_GOOGLE} initialRegion={{
-          latitude: this.state.cordLatitude,
-          longitude: this.state.cordLongitude,
-          latitudeDelta: 0.10,
-          longitudeDelta: 0.10
-        }}>
-
-          {!!this.state.latitude && !!this.state.longitude && <MapView.Marker
-            coordinate={{ "latitude": this.state.latitude, "longitude": this.state.longitude }}
-            title={"Your Location"}
-          />}
+      <Container>
+        <Header searchBar rounded>
+          <Item>
+            <Icon name="ios-search" />
+            <Input placeholder="Search" />
+            <Icon type="Entypo" name="location" />
+          </Item>
+          <Button transparent>
+            <Text>Search</Text>
+          </Button>
+        </Header>
+        <MapView
+          provider={PROVIDER_GOOGLE}
+          style={styles.container}
+          // customMapStyle={MapStyle}
+          showsUserLocation={true}
+          initialRegion={this.state.region}
+        >
 
           {!!this.state.cordLatitude && !!this.state.cordLongitude && <MapView.Marker
             coordinate={{ "latitude": this.state.cordLatitude, "longitude": this.state.cordLongitude }}
             title={"Your Destination"}
           />}
 
-          {!!this.state.latitude && !!this.state.longitude && this.state.x == 'true' && <MapView.Polyline
+          {this.state.coords != null && <MapView.Polyline
             coordinates={this.state.coords}
             strokeWidth={2}
             strokeColor="red" />
           }
-
-          {!!this.state.latitude && !!this.state.longitude && this.state.x == 'error' && <MapView.Polyline
-            coordinates={[
-              { latitude: this.state.latitude, longitude: this.state.longitude },
-              { latitude: this.state.cordLatitude, longitude: this.state.cordLongitude },
-            ]}
-            strokeWidth={2}
-            strokeColor="red" />
-          }
         </MapView>
-      </View>
-    );
+      </Container>
+    )
   }
 }
-
 const styles = StyleSheet.create({
-  map: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    width: Dimensions.get('window').width,
-    height: Dimensions.get('window').height
-  },
-});
+  container: {
+    height: '100%',
+    width: '100%',
+  }
+})
 
-export default App;
+export default App
