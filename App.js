@@ -15,8 +15,10 @@ const LATITUDE_DELTA = 0.0922
 const LONGITUDE_DELTA = LATITUDE_DELTA * ASPECT_RATIO
 
 class App extends Component {
+
   constructor() {
     super()
+
     this.state = {
       region: {
         latitude: LATITUDE,
@@ -25,10 +27,11 @@ class App extends Component {
         longitudeDelta: LONGITUDE_DELTA,
       },
       // Destination
-      cordLatitude: 29.091201,
-      cordLongitude: -110.968367,
+      cordLatitude: null,
+      cordLongitude: null,
       coords: null,
       direction: null,
+      searchText: null,
     }
 
     this.mergeLot = this.mergeLot.bind(this)
@@ -75,7 +78,34 @@ class App extends Component {
   mergeLot() {
     if (this.state.region != null) {
       let concatLot = this.state.region.latitude + "," + this.state.region.longitude
-      this.getDirections(concatLot, this.state.cordLatitude + "," + this.state.cordLongitude)
+      if (this.state.cordLatitude != null && this.state.cordLongitude != null) {
+        this.getDirections(concatLot, this.state.cordLatitude + "," + this.state.cordLongitude)
+      }
+    }
+  }
+
+  searchPlace = () => {
+    this.getPlace(this.state.searchText)
+  }
+
+  async getPlace(address) {
+    try {
+      let resp = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${address}&key=${GOOGLE_API_KEY}`)
+      let respJson = await resp.json()
+
+      let { lat, lng } = respJson.results[0].geometry.location
+      this.setState({ cordLatitude: lat })
+      this.setState({ cordLongitude: lng })
+
+      this.mergeLot()
+
+      return {
+        lat,
+        lng
+      }
+    } catch (error) {
+      console.log(error)
+      return error
     }
   }
 
@@ -84,8 +114,6 @@ class App extends Component {
       let resp = await fetch(`https://maps.googleapis.com/maps/api/directions/json?origin=${startLoc}&destination=${destinationLoc}&key=${GOOGLE_API_KEY}`)
 
       let respJson = await resp.json()
-      console.log(respJson)
-      console.log(`https://maps.googleapis.com/maps/api/directions/json?origin=${startLoc}&destination=${destinationLoc}&key=${GOOGLE_API_KEY}`)
 
       let points = Polyline.decode(respJson.routes[0].overview_polyline.points)
       let coords = points.map((point, index) => {
@@ -103,24 +131,31 @@ class App extends Component {
     }
   }
 
+  updateFormField = fieldName => text => {
+    this.setState({ [fieldName]: text })
+  }
+
   render() {
     return (
       <Container>
         <Header searchBar rounded>
           <Item>
             <Icon name="ios-search" />
-            <Input placeholder="Search" />
-            <Icon type="Entypo" name="location" />
+            <Input
+              onChangeText={this.updateFormField('searchText')}
+              placeholder="Search" />
+
+            <Button transparent
+              onPress={this.searchPlace}>
+              <Icon type="Entypo" name="location" />
+            </Button>
+
           </Item>
-          <Button transparent>
-            <Text>Search</Text>
-          </Button>
         </Header>
         <Content>
           <MapView
             provider={PROVIDER_GOOGLE}
             style={styles.map}
-            // customMapStyle={MapStyle}
             showsUserLocation={true}
             initialRegion={this.state.region}
           >
