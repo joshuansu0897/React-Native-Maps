@@ -3,7 +3,7 @@ import { StyleSheet, Dimensions } from 'react-native'
 
 import MapView, { PROVIDER_GOOGLE } from 'react-native-maps'
 import Polyline from '@mapbox/polyline'
-import { Container, Header, Item, Input, Icon, Button, Text } from 'native-base';
+import { Container, Header, Item, Input, Icon, Button, Text, Content, Footer, FooterTab } from 'native-base';
 
 import GOOGLE_API_KEY from './tokenGoogle'
 
@@ -28,6 +28,7 @@ class App extends Component {
       cordLatitude: 29.091201,
       cordLongitude: -110.968367,
       coords: null,
+      direction: null,
     }
 
     this.mergeLot = this.mergeLot.bind(this)
@@ -93,6 +94,7 @@ class App extends Component {
           longitude: point[1]
         }
       })
+      this.setState({ direction: respJson.routes[0].legs[0].steps[0].html_instructions })
       this.setState({ coords: coords })
       return coords
     } catch (error) {
@@ -100,6 +102,7 @@ class App extends Component {
       return error
     }
   }
+
   render() {
     return (
       <Container>
@@ -113,33 +116,44 @@ class App extends Component {
             <Text>Search</Text>
           </Button>
         </Header>
-        <MapView
-          provider={PROVIDER_GOOGLE}
-          style={styles.container}
-          // customMapStyle={MapStyle}
-          showsUserLocation={true}
-          initialRegion={this.state.region}
-        >
+        <Content>
+          <MapView
+            provider={PROVIDER_GOOGLE}
+            style={styles.map}
+            // customMapStyle={MapStyle}
+            showsUserLocation={true}
+            initialRegion={this.state.region}
+          >
 
-          {!!this.state.cordLatitude && !!this.state.cordLongitude && <MapView.Marker
-            coordinate={{ "latitude": this.state.cordLatitude, "longitude": this.state.cordLongitude }}
-            title={"Your Destination"}
-          />}
+            {!!this.state.cordLatitude && !!this.state.cordLongitude && <MapView.Marker
+              coordinate={{ "latitude": this.state.cordLatitude, "longitude": this.state.cordLongitude }}
+              title={"Your Destination"}
+            />}
 
-          {this.state.coords != null && <MapView.Polyline
-            coordinates={this.state.coords}
-            strokeWidth={2}
-            strokeColor="red" />
-          }
-        </MapView>
+            {this.state.coords != null && <MapView.Polyline
+              coordinates={this.state.coords}
+              strokeWidth={2}
+              strokeColor="red" />
+            }
+          </MapView>
+        </Content>
+        {this.state.direction != null &&
+          <Footer>
+            <FooterTab>
+              <Button full>
+                <Text>{this.state.direction}</Text>
+              </Button>
+            </FooterTab>
+          </Footer>
+        }
       </Container>
     )
   }
 }
 const styles = StyleSheet.create({
-  container: {
-    height: '100%',
-    width: '100%',
+  map: {
+    width,
+    height,
   }
 })
 
